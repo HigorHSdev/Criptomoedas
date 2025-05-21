@@ -3,72 +3,103 @@ import pandas as pd
 import yfinance as yf
 import json
 import plotly.express as px
+from datetime import datetime
 
-# Carrega dados
-with open("data.json", "r") as _json:
-    data_string = _json.read()
+st.title("Investimentos em Criptomoedas")
 
-obj = json.loads(data_string)
-crypto_dict = dict(zip(obj["crypto_names"], obj["crypto_symbols"]))
+# Dados salvos
+try:
+    with open("investments.json", "r") as file:
+        investments = json.load(file)
+except FileNotFoundError:
+    investments = []
+# Dados
+with open("data.json", "r") as file:
+    crypto_data = json.load(file)
+    crypto_dict = dict(zip(crypto_data["crypto_names"], crypto_data["crypto_symbols"]))
 
-# Seleção cripto
-crypto_selected = st.selectbox(
-    label='Selecione sua moeda',
-    options=crypto_dict.keys()
-)
+#   Adicionar investimento
+st.sidebar.header("Adicionar Investimento")
+with st.sidebar.form("add_investment"):
+    crypto_selected = st.selectbox("Criptomoeda", options=crypto_dict.keys())
+    purchase_date = st.date_input("Data da compra")
+    purchase_price = st.number_input("Preço de compra (USD)", min_value=0.0, step=0.01)
+    amount = st.number_input("Quantidade comprada", min_value=0.0, step=0.01)
+    
+    if st.form_submit_button("Salvar Investimento"):
+        new_investment = {
+            "id": len(investments) + 1,
+            "crypto": crypto_selected,
+            "symbol": crypto_dict[crypto_selected],
+            "purchase_date": str(purchase_date),
+            "purchase_price": purchase_price,
+            "amount": amount
+        }
+        investments.append(new_investment)
+        with open("investments.json", "w") as file:
+            json.dump(investments, file)
+        st.success("Investimento registrado!")
 
-_symbol = crypto_dict[crypto_selected] + '-USD'
-ticker = yf.Ticker(_symbol)
-df = ticker.history(interval='1d', period='2y')
-
-#lucro/prejuízo
-st.subheader("Calculadora de Lucro/Prejuízo")
-
-#ano da compra
-year_list = list(range(df.index.min().year, df.index.max().year + 1))
-purchase_year = st.selectbox(
-    "Ano de compra",
-    options=year_list,
-    index=len(year_list)-1  # Seleciona o último ano por padrão
-)
-
-# Preço de compra
-purchase_price = st.number_input(
-    "Preço de compra (USD)",
-    min_value=0.0,
-    value=float(df['Close'].iloc[-1]),  # Preço atual como valor padrão
-    step=0.01
-)
-
-# Calcula o resultado
-current_price = df['Close'].iloc[-1]
-profit_loss = (current_price - purchase_price)
-percent_change = ((current_price - purchase_price) / purchase_price) * 100
-
-# Exibe os resultados
-col1, col2 = st.columns(2)
-with col1:
-    st.metric("Preço atual", f"${current_price:,.2f}")
-with col2:
-    st.metric("Variação", f"{percent_change:,.2f}%")
-
-if profit_loss >= 0:
-    st.success(f"Lucro: ${profit_loss:,.2f} ({percent_change:,.2f}%)")
+#   Visualizar investimentos
+st.header("Meus Investimentos")
+if not investments:
+    st.warning("Nenhum investimento registrado.")
 else:
-    st.error(f"Prejuízo: ${abs(profit_loss):,.2f} ({percent_change:,.2f}%)")
+    df_investments = pd.DataFrame(investments)
+    st.dataframe(df_investments)
 
-# Gráfico principal
-st.subheader(f"Histórico de {crypto_selected}")
-columns_selected = st.multiselect(
-    label='Selecione as colunas para o gráfico:',
-    options=df.columns,
-    default=['Close']
-)
+#   Editar
+if investments:
+    st.header("Gerenciar Investimentos")
+    invest_id = st.selectbox(
+        "Selecione o investimento para editar/excluir",
+        options=[inv["id"] for inv in investments]
+    )
+    
+    selected_invest = next(inv for inv in investments if inv["id"] == invest_id)
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        with st.form("edit_investment"):
+            st.write(f"Editando: {selected_invest['crypto']}")
+            new_amount = st.number_input("Nova quantidade", value=selected_invest["amount"])
+            new_price = st.number_input("Novo preço", value=selected_invest["purchase_price"])
+            
+            if st.form_submit_button("Atualizar"):
+                selected_invest["amount"] = new_amount
+                selected_invest["purchase_price"] = new_price
+                with open("investments.json", "w") as file:
+                    json.dump(investments, file)
+                st.success("Atualizado com sucesso!")
+    
+    with col2:
+        if st.button("Excluir Investimento"):
+            investments = [inv for inv in investments if inv["id"] != invest_id]
+            with open("investments.json", "w") as file:
+                json.dump(investments, file)
+            st.success("Investimento removido!")
 
-fig = px.line(
-    df,
-    x=df.index,
-    y=columns_selected,
-    title=f'Valores de {crypto_selected}'
-)
-st.plotly_chart(fig)
+# Gráfico
+if investments:
+    st.header("Desempenho dos Investimentos")
+    selected_crypto = st.selectbox(
+        "Selecione uma criptomoeda para análise",
+        options=list(set([inv["crypto"] for inv in investments]))
+    )
+    
+    #   Dados históricos
+    symbol = crypto_dict[selected_crypto] + "-USD"
+    df_history = yf.Ticker(symbol).history(period="2y")["Close"].reset_index()
+    
+    #   Investimentos na criptomoeda selecionada
+    crypto_investments = [inv for inv in investments if inv["crypto"] == selected_crypto]
+    
+    #   Gráfico
+    fig = px.line(df_history, x="Date", y="Close", title=f"Histórico de {selected_crypto}")
+    
+    #   Marcadores para os investimentos
+    for inv in crypto_investments:
+        purchase_date = datetime.strptime(inv["purchase_date"], "%Y-%m-%d").date()
+        fig.add_vline(x=purchase_date, line_dash="dash", line_color="red")
+    
+    st.plotly_chart(fig)
