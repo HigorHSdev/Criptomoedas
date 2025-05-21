@@ -97,7 +97,7 @@ if investments:
     #   Gráfico
     fig = px.line(df_history, x="Date", y="Close", title=f"Histórico de {selected_crypto}")
     
-    #   Marcadores para os investimentos
+    #   Marcador
     for inv in crypto_investments:
         purchase_date = datetime.strptime(inv["purchase_date"], "%Y-%m-%d").date()
         fig.add_vline(x=purchase_date, line_dash="dash", line_color="red")
