@@ -41,37 +41,38 @@ Entre os principais tópicos analisados:
 
 ```bash
 git clone https://github.com/HigorHSdev/Criptomoedas.git
+```
 
 2. Navegue até o diretório do projeto (se necessário):
-
+```bash
 cd Criptomoedas
-
+```
 3. (Opcional) Crie e ative um ambiente virtual:
-
+```bash
 python -m venv venv
 source venv/bin/activate  # No Linux/macOS
 venv\Scripts\activate     # No Windows
-
+```
 4. Instale as dependências:
-
+```bash
 pip install -r requirements.txt
-
+```
 5. Execute o Jupyter Notebook:
-
+```bash
 jupyter notebook
-
+```
 Abra o arquivo analise_estatistica.ipynb no navegador para visualizar as análises.
 
 
 ## 📁 Estrutura do Repositório
-
+```bash
 Criptomoedas/
 ├── dados/                     # Dados CSV utilizados nas análises
 ├── graficos/                  # Exportações de gráficos
 ├── analise_estatistica.ipynb  # Notebook principal com as análises
 ├── requirements.txt           # Dependências do projeto
 └── README.md                  # Documentação
-
+```
 
 ##🧠 Aprendizados
 Este projeto reforçou conceitos como:
