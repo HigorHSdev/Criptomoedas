@@ -19,7 +19,7 @@ Este repositório contém um projeto desenvolvido como parte da disciplina de **
 - **Python 3.10+**
 - **Pandas** – manipulação de dados
 - **Matplotlib** e **Seaborn** – visualização gráfica
-- **Jupyter Notebook** – desenvolvimento e apresentação dos resultados
+- **Streamlit** – desenvolvimento e apresentação dos resultados
 
 ---
 
@@ -57,12 +57,10 @@ venv\Scripts\activate     # No Windows
 ```bash
 pip install -r requirements.txt
 ```
-5. Execute o Jupyter Notebook:
+5. Execute o Streamlit:
 ```bash
-jupyter notebook
+Streamlit run app.py
 ```
-Abra o arquivo analise_estatistica.ipynb no navegador para visualizar as análises.
-
 
 ## 📁 Estrutura do Repositório
 ```bash
